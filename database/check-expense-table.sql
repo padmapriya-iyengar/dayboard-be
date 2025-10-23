@@ -1,0 +1,10 @@
+-- Query to check the structure of Expense_Details table
+SELECT 
+    COLUMN_NAME,
+    DATA_TYPE,
+    IS_NULLABLE,
+    COLUMN_DEFAULT,
+    CHARACTER_MAXIMUM_LENGTH
+FROM INFORMATION_SCHEMA.COLUMNS 
+WHERE TABLE_NAME = 'Expense_Details'
+ORDER BY ORDINAL_POSITION;
