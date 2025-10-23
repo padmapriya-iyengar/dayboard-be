@@ -22,7 +22,7 @@ const validateExpenseFilters = validateExpenseQuery(expenseFiltersSchema);
  * @route   GET /api/expenses
  * @desc    Get all expenses with filtering and pagination
  * @access  Public
- * @query   ?isDebit=boolean&dateFrom=date&dateTo=date&amountMin=number&amountMax=number&search=string&page=number&limit=number&sortBy=string&sortOrder=asc|desc
+ * @query   ?isDebit=boolean&dateFrom=date&dateTo=date&amountMin=number&amountMax=number&search=string&Person_Id=number&page=number&limit=number&sortBy=string&sortOrder=asc|desc
  */
 router.get("/", validateExpenseFilters, ExpenseController.getAllExpenses);
 
@@ -30,7 +30,7 @@ router.get("/", validateExpenseFilters, ExpenseController.getAllExpenses);
  * @route   GET /api/expenses/stats
  * @desc    Get expense statistics
  * @access  Public
- * @query   ?isDebit=boolean&dateFrom=date&dateTo=date&amountMin=number&amountMax=number&search=string
+ * @query   ?isDebit=boolean&dateFrom=date&dateTo=date&amountMin=number&amountMax=number&search=string&Person_Id=number
  */
 router.get("/stats", validateExpenseFilters, ExpenseController.getExpenseStats);
 
@@ -38,7 +38,7 @@ router.get("/stats", validateExpenseFilters, ExpenseController.getExpenseStats);
  * @route   GET /api/expenses/type-summary
  * @desc    Get expenses grouped by type (debit/credit)
  * @access  Public
- * @query   ?amountMin=number&amountMax=number&search=string
+ * @query   ?amountMin=number&amountMax=number&search=string&Person_Id=number
  */
 router.get(
   "/type-summary",

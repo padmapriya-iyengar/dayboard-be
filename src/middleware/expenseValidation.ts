@@ -1,5 +1,28 @@
 import Joi from "joi";
 
+// Validation schema for creating person
+export const createPersonSchema = Joi.object({
+  Name: Joi.string().trim().min(1).max(255).required().messages({
+    "string.empty": "Name cannot be empty",
+    "string.min": "Name must have at least 1 character",
+    "string.max": "Name must not exceed 255 characters",
+    "any.required": "Name is required",
+  }),
+});
+
+// Validation schema for updating person
+export const updatePersonSchema = Joi.object({
+  Name: Joi.string().trim().min(1).max(255).optional().messages({
+    "string.empty": "Name cannot be empty",
+    "string.min": "Name must have at least 1 character",
+    "string.max": "Name must not exceed 255 characters",
+  }),
+})
+  .min(1)
+  .messages({
+    "object.min": "At least one field must be provided for update",
+  });
+
 // Validation schema for creating expense (matching actual table columns)
 export const createExpenseSchema = Joi.object({
   Amount: Joi.number().positive().required().messages({
@@ -17,6 +40,11 @@ export const createExpenseSchema = Joi.object({
 
   TxnDate: Joi.date().iso().optional().messages({
     "date.format": "TxnDate must be in ISO format (YYYY-MM-DD)",
+  }),
+
+  Person_Id: Joi.number().integer().positive().optional().messages({
+    "number.integer": "Person_Id must be an integer",
+    "number.positive": "Person_Id must be a positive number",
   }),
 });
 
@@ -37,11 +65,25 @@ export const updateExpenseSchema = Joi.object({
   TxnDate: Joi.date().iso().optional().messages({
     "date.format": "TxnDate must be in ISO format (YYYY-MM-DD)",
   }),
+
+  Person_Id: Joi.number().integer().positive().optional().messages({
+    "number.integer": "Person_Id must be an integer",
+    "number.positive": "Person_Id must be a positive number",
+  }),
 })
   .min(1)
   .messages({
     "object.min": "At least one field must be provided for update",
   });
+
+// Validation schema for person ID parameter
+export const personIdSchema = Joi.object({
+  id: Joi.number().integer().positive().required().messages({
+    "number.integer": "ID must be an integer",
+    "number.positive": "ID must be a positive number",
+    "any.required": "ID is required",
+  }),
+});
 
 // Validation schema for expense ID parameter
 export const expenseIdSchema = Joi.object({
@@ -79,12 +121,17 @@ export const expenseFiltersSchema = Joi.object({
     "date.min": "End date must be after start date",
   }),
 
+  Person_Id: Joi.number().integer().positive().optional().messages({
+    "number.integer": "Person_Id must be an integer",
+    "number.positive": "Person_Id must be a positive number",
+  }),
+
   page: Joi.number().integer().min(1).default(1).optional(),
 
   limit: Joi.number().integer().min(1).max(100).default(50).optional(),
 
   sortBy: Joi.string()
-    .valid("Id", "Amount", "Description", "TxnDate")
+    .valid("Id", "Amount", "Description", "TxnDate", "Person_Id")
     .default("TxnDate")
     .optional(),
 

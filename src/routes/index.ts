@@ -1,5 +1,6 @@
 import express, { Request, Response } from "express";
 import expenseRoutes from "./expenses";
+import personRoutes from "./persons";
 
 const router = express.Router();
 
@@ -20,6 +21,7 @@ router.get("/", (_req: Request, res: Response) => {
       health: "/health",
       api: "/api/v1",
       expenses: "/api/v1/expenses",
+      persons: "/api/v1/persons",
       // auth: '/api/v1/auth',
       // grocery: '/api/v1/grocery',
       // finance: '/api/v1/finance',
@@ -32,10 +34,6 @@ router.get("/", (_req: Request, res: Response) => {
 
 // Mount route modules
 router.use("/expenses", expenseRoutes);
-// router.use('/auth', authRoutes);
-// router.use('/grocery', groceryRoutes);
-// router.use('/finance', financeRoutes);
-// router.use('/reminder', reminderRoutes);
-// router.use('/task', taskRoutes);
+router.use("/persons", personRoutes);
 
 export default router;

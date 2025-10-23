@@ -1,3 +1,19 @@
+// Person Details interface for the Person_Details table
+export interface PersonDetails {
+  Id?: number;
+  Name: string;
+}
+
+// Interface for creating new person (without auto-generated fields)
+export interface CreatePersonDetails {
+  Name: string;
+}
+
+// Interface for updating person (all fields optional)
+export interface UpdatePersonDetails {
+  Name?: string;
+}
+
 // Expense Details interface for the existing table (matching actual DB schema)
 export interface ExpenseDetails {
   Id?: number;
@@ -5,6 +21,8 @@ export interface ExpenseDetails {
   Description?: string;
   isDebit?: boolean;
   TxnDate?: Date;
+  Person_Id?: number;
+  PersonName?: string; // For joined queries
   [key: string]: any; // Allow for additional fields that might exist in the table
 }
 
@@ -14,6 +32,7 @@ export interface CreateExpenseDetails {
   Description?: string;
   isDebit?: boolean;
   TxnDate?: Date;
+  Person_Id?: number;
 }
 
 // Interface for updating expense (all fields optional)
@@ -22,6 +41,7 @@ export interface UpdateExpenseDetails {
   Description?: string;
   isDebit?: boolean;
   TxnDate?: Date;
+  Person_Id?: number;
 }
 
 // Query filters for expenses (simplified based on available columns)
@@ -32,6 +52,7 @@ export interface ExpenseFilters {
   search?: string; // Will search in Description
   dateFrom?: Date;
   dateTo?: Date;
+  Person_Id?: number; // Filter by person
 }
 
 // Common response interface
