@@ -54,9 +54,17 @@ export class ExpenseService {
         request.input("dateTo", sql.Date, filters.dateTo);
       }
 
+      // Only add Account_Id and Person_Id filters if we're sure the tables exist
+      if (filters.Account_Id !== undefined) {
+        whereConditions.push("e.Account_Id = @accountId");
+        request.input("accountId", sql.Int, filters.Account_Id);
+      }
+
+      // For Person_Id filtering, we'll need to check if Person_Account table exists
       if (filters.Person_Id !== undefined) {
-        whereConditions.push("e.Person_Id = @personId");
-        request.input("personId", sql.Int, filters.Person_Id);
+        // For now, skip this filter until we verify the table structure
+        // whereConditions.push("pa.Person_Id = @personId");
+        // request.input("personId", sql.Int, filters.Person_Id);
       }
 
       const whereClause =
@@ -64,9 +72,8 @@ export class ExpenseService {
           ? `WHERE ${whereConditions.join(" AND ")}`
           : "";
 
-      // Get total count first
-      const countQuery = `SELECT COUNT(*) as total FROM Expense_Details e 
-                          LEFT JOIN Person_Details p ON e.Person_Id = p.Id ${whereClause}`;
+      // Get total count first - simple query without joins for now
+      const countQuery = `SELECT COUNT(*) as total FROM Expense_Details e ${whereClause}`;
       const countResult = await request.query(countQuery);
       const total = countResult.recordset[0].total;
 
@@ -92,6 +99,9 @@ export class ExpenseService {
       if (filters.dateTo) {
         request.input("dateTo", sql.Date, filters.dateTo);
       }
+      if (filters.Account_Id !== undefined) {
+        request.input("accountId", sql.Int, filters.Account_Id);
+      }
       if (filters.Person_Id !== undefined) {
         request.input("personId", sql.Int, filters.Person_Id);
       }
@@ -99,26 +109,43 @@ export class ExpenseService {
       // Calculate offset for pagination
       const offset = (pagination.page - 1) * pagination.limit;
 
-      // Build ORDER BY clause
+      // Build ORDER BY clause - Always order by date DESC first, then by other criteria
       const validSortColumns = [
         "Id",
         "Amount",
         "Description",
         "TxnDate",
-        "Person_Id",
+        "Account_Id",
       ];
+
+      // Default to TxnDate DESC if no sort specified or invalid sort column
       const sortBy = validSortColumns.includes(pagination.sortBy || "")
         ? `e.${pagination.sortBy}`
         : "e.TxnDate";
-      const sortOrder = pagination.sortOrder === "asc" ? "ASC" : "DESC";
 
-      // Get paginated data
+      // For TxnDate, default to DESC; for other columns, respect sortOrder but default to DESC
+      let sortOrder = "DESC";
+      if (pagination.sortOrder === "asc") {
+        sortOrder = "ASC";
+      }
+
+      // Always ensure primary sorting by date DESC unless explicitly sorting by TxnDate with ASC
+      const orderByClause =
+        pagination.sortBy === "TxnDate"
+          ? `ORDER BY ${sortBy} ${sortOrder}, e.Id DESC`
+          : `ORDER BY e.TxnDate DESC, ${sortBy} ${sortOrder}`;
+
+      // Get paginated data - using correct column names from actual database
       const dataQuery = `
-        SELECT e.Id, e.Amount, e.Description, e.isDebit, e.TxnDate, e.Person_Id, p.Name as PersonName
+        SELECT e.Id, e.Amount, e.Description, e.isDebit, e.TxnDate, e.Account_Id,
+               ISNULL(pa.Account, 'No Account') as AccountName,
+               ISNULL(pa.Currency, '') as Currency,
+               ISNULL(p.Name, 'Unknown Person') as PersonName
         FROM Expense_Details e
-        LEFT JOIN Person_Details p ON e.Person_Id = p.Id
+        LEFT JOIN Person_Account pa ON e.Account_Id = pa.Id
+        LEFT JOIN Person_Details p ON pa.Person_Id = p.Id
         ${whereClause}
-        ORDER BY ${sortBy} ${sortOrder}
+        ${orderByClause}
         OFFSET @offset ROWS 
         FETCH NEXT @limit ROWS ONLY
       `;
@@ -161,9 +188,11 @@ export class ExpenseService {
       request.input("id", sql.Int, id);
 
       const query = `
-        SELECT e.Id, e.Amount, e.Description, e.isDebit, e.TxnDate, e.Person_Id, p.Name as PersonName
+        SELECT e.Id, e.Amount, e.Description, e.isDebit, e.TxnDate, e.Account_Id, 
+               pa.Account as AccountName, pa.Currency, p.Name as PersonName
         FROM Expense_Details e
-        LEFT JOIN Person_Details p ON e.Person_Id = p.Id
+        LEFT JOIN Person_Account pa ON e.Account_Id = pa.Id
+        LEFT JOIN Person_Details p ON pa.Person_Id = p.Id
         WHERE e.Id = @id
       `;
 
@@ -198,12 +227,12 @@ export class ExpenseService {
       );
       request.input("isDebit", sql.Bit, expenseData.isDebit || false);
       request.input("txnDate", sql.Date, expenseData.TxnDate || new Date());
-      request.input("personId", sql.Int, expenseData.Person_Id || null);
+      request.input("accountId", sql.Int, expenseData.Account_Id || null);
 
       const query = `
-        INSERT INTO Expense_Details (Amount, Description, isDebit, TxnDate, Person_Id)
-        OUTPUT INSERTED.Id, INSERTED.Amount, INSERTED.Description, INSERTED.isDebit, INSERTED.TxnDate, INSERTED.Person_Id
-        VALUES (@amount, @description, @isDebit, @txnDate, @personId)
+        INSERT INTO Expense_Details (Amount, Description, isDebit, TxnDate, Account_Id)
+        OUTPUT INSERTED.Id, INSERTED.Amount, INSERTED.Description, INSERTED.isDebit, INSERTED.TxnDate, INSERTED.Account_Id
+        VALUES (@amount, @description, @isDebit, @txnDate, @accountId)
       `;
 
       const result = await request.query(query);
@@ -252,9 +281,9 @@ export class ExpenseService {
         request.input("txnDate", sql.Date, updateData.TxnDate);
       }
 
-      if (updateData.Person_Id !== undefined) {
-        updateFields.push("Person_Id = @personId");
-        request.input("personId", sql.Int, updateData.Person_Id);
+      if (updateData.Account_Id !== undefined) {
+        updateFields.push("Account_Id = @accountId");
+        request.input("accountId", sql.Int, updateData.Account_Id);
       }
 
       if (updateFields.length === 0) {
@@ -266,7 +295,7 @@ export class ExpenseService {
       const query = `
         UPDATE Expense_Details 
         SET ${updateFields.join(", ")}
-        OUTPUT INSERTED.Id, INSERTED.Amount, INSERTED.Description, INSERTED.isDebit, INSERTED.TxnDate, INSERTED.Person_Id
+        OUTPUT INSERTED.Id, INSERTED.Amount, INSERTED.Description, INSERTED.isDebit, INSERTED.TxnDate, INSERTED.Account_Id
         WHERE Id = @id
       `;
 

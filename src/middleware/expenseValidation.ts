@@ -23,6 +23,48 @@ export const updatePersonSchema = Joi.object({
     "object.min": "At least one field must be provided for update",
   });
 
+// Validation schema for creating account
+export const createAccountSchema = Joi.object({
+  Person_Id: Joi.number().integer().positive().required().messages({
+    "number.integer": "Person_Id must be an integer",
+    "number.positive": "Person_Id must be a positive number",
+    "any.required": "Person_Id is required",
+  }),
+
+  Account: Joi.string().trim().min(1).max(255).required().messages({
+    "string.empty": "Account name cannot be empty",
+    "string.min": "Account name must have at least 1 character",
+    "string.max": "Account name must not exceed 255 characters",
+    "any.required": "Account name is required",
+  }),
+
+  Currency: Joi.string().trim().max(10).optional().messages({
+    "string.max": "Currency must not exceed 10 characters",
+  }),
+});
+
+// Validation schema for updating account
+export const updateAccountSchema = Joi.object({
+  Person_Id: Joi.number().integer().positive().optional().messages({
+    "number.integer": "Person_Id must be an integer",
+    "number.positive": "Person_Id must be a positive number",
+  }),
+
+  Account: Joi.string().trim().min(1).max(255).optional().messages({
+    "string.empty": "Account name cannot be empty",
+    "string.min": "Account name must have at least 1 character",
+    "string.max": "Account name must not exceed 255 characters",
+  }),
+
+  Currency: Joi.string().trim().max(10).optional().messages({
+    "string.max": "Currency must not exceed 10 characters",
+  }),
+})
+  .min(1)
+  .messages({
+    "object.min": "At least one field must be provided for update",
+  });
+
 // Validation schema for creating expense (matching actual table columns)
 export const createExpenseSchema = Joi.object({
   Amount: Joi.number().positive().required().messages({
@@ -42,9 +84,9 @@ export const createExpenseSchema = Joi.object({
     "date.format": "TxnDate must be in ISO format (YYYY-MM-DD)",
   }),
 
-  Person_Id: Joi.number().integer().positive().optional().messages({
-    "number.integer": "Person_Id must be an integer",
-    "number.positive": "Person_Id must be a positive number",
+  Account_Id: Joi.number().integer().positive().optional().messages({
+    "number.integer": "Account_Id must be an integer",
+    "number.positive": "Account_Id must be a positive number",
   }),
 });
 
@@ -66,15 +108,24 @@ export const updateExpenseSchema = Joi.object({
     "date.format": "TxnDate must be in ISO format (YYYY-MM-DD)",
   }),
 
-  Person_Id: Joi.number().integer().positive().optional().messages({
-    "number.integer": "Person_Id must be an integer",
-    "number.positive": "Person_Id must be a positive number",
+  Account_Id: Joi.number().integer().positive().optional().messages({
+    "number.integer": "Account_Id must be an integer",
+    "number.positive": "Account_Id must be a positive number",
   }),
 })
   .min(1)
   .messages({
     "object.min": "At least one field must be provided for update",
   });
+
+// Validation schema for account ID parameter
+export const accountIdSchema = Joi.object({
+  id: Joi.number().integer().positive().required().messages({
+    "number.integer": "ID must be an integer",
+    "number.positive": "ID must be a positive number",
+    "any.required": "ID is required",
+  }),
+});
 
 // Validation schema for person ID parameter
 export const personIdSchema = Joi.object({
@@ -121,6 +172,11 @@ export const expenseFiltersSchema = Joi.object({
     "date.min": "End date must be after start date",
   }),
 
+  Account_Id: Joi.number().integer().positive().optional().messages({
+    "number.integer": "Account_Id must be an integer",
+    "number.positive": "Account_Id must be a positive number",
+  }),
+
   Person_Id: Joi.number().integer().positive().optional().messages({
     "number.integer": "Person_Id must be an integer",
     "number.positive": "Person_Id must be a positive number",
@@ -131,7 +187,7 @@ export const expenseFiltersSchema = Joi.object({
   limit: Joi.number().integer().min(1).max(100).default(50).optional(),
 
   sortBy: Joi.string()
-    .valid("Id", "Amount", "Description", "TxnDate", "Person_Id")
+    .valid("Id", "Amount", "Description", "TxnDate", "Account_Id")
     .default("TxnDate")
     .optional(),
 

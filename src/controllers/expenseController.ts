@@ -31,6 +31,9 @@ export class ExpenseController {
         dateTo: req.query.dateTo
           ? new Date(req.query.dateTo as string)
           : undefined,
+        Account_Id: req.query.Account_Id
+          ? parseInt(req.query.Account_Id as string)
+          : undefined,
         Person_Id: req.query.Person_Id
           ? parseInt(req.query.Person_Id as string)
           : undefined,
@@ -79,7 +82,7 @@ export class ExpenseController {
         Description: req.body.Description,
         isDebit: req.body.isDebit,
         TxnDate: req.body.TxnDate ? new Date(req.body.TxnDate) : undefined,
-        Person_Id: req.body.Person_Id,
+        Account_Id: req.body.Account_Id,
       };
 
       const newExpense = await ExpenseService.createExpense(expenseData);
@@ -108,7 +111,7 @@ export class ExpenseController {
         Description: req.body.Description,
         isDebit: req.body.isDebit,
         TxnDate: req.body.TxnDate ? new Date(req.body.TxnDate) : undefined,
-        Person_Id: req.body.Person_Id,
+        Account_Id: req.body.Account_Id,
       };
 
       const updatedExpense = await ExpenseService.updateExpense(id, updateData);

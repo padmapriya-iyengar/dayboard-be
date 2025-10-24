@@ -14,6 +14,29 @@ export interface UpdatePersonDetails {
   Name?: string;
 }
 
+// Person Account interface for the Person_Account table (matching actual DB schema)
+export interface PersonAccount {
+  Id?: number;
+  Person_Id: number;
+  Account: string; // Actual column name in database
+  Currency?: string; // Additional field in database
+  PersonName?: string; // For joined queries
+}
+
+// Interface for creating new account (without auto-generated fields)
+export interface CreatePersonAccount {
+  Person_Id: number;
+  Account: string; // Actual column name in database
+  Currency?: string; // Additional field in database
+}
+
+// Interface for updating account (all fields optional)
+export interface UpdatePersonAccount {
+  Person_Id?: number;
+  Account?: string; // Actual column name in database
+  Currency?: string; // Additional field in database
+}
+
 // Expense Details interface for the existing table (matching actual DB schema)
 export interface ExpenseDetails {
   Id?: number;
@@ -21,8 +44,10 @@ export interface ExpenseDetails {
   Description?: string;
   isDebit?: boolean;
   TxnDate?: Date;
-  Person_Id?: number;
-  PersonName?: string; // For joined queries
+  Account_Id?: number;
+  AccountName?: string; // For joined queries (aliased from pa.Account)
+  Currency?: string; // For joined queries from Person_Account
+  PersonName?: string; // For joined queries through accounts
   [key: string]: any; // Allow for additional fields that might exist in the table
 }
 
@@ -32,7 +57,7 @@ export interface CreateExpenseDetails {
   Description?: string;
   isDebit?: boolean;
   TxnDate?: Date;
-  Person_Id?: number;
+  Account_Id?: number;
 }
 
 // Interface for updating expense (all fields optional)
@@ -41,7 +66,7 @@ export interface UpdateExpenseDetails {
   Description?: string;
   isDebit?: boolean;
   TxnDate?: Date;
-  Person_Id?: number;
+  Account_Id?: number;
 }
 
 // Query filters for expenses (simplified based on available columns)
@@ -52,7 +77,8 @@ export interface ExpenseFilters {
   search?: string; // Will search in Description
   dateFrom?: Date;
   dateTo?: Date;
-  Person_Id?: number; // Filter by person
+  Account_Id?: number; // Filter by account
+  Person_Id?: number; // Filter by person (through account)
 }
 
 // Common response interface
