@@ -1,4 +1,5 @@
 import Joi from "joi";
+import { Request, Response, NextFunction } from "express";
 
 // Validation schema for creating person
 export const createPersonSchema = Joi.object({
@@ -255,6 +256,139 @@ export const validateExpenseQuery = (schema: Joi.ObjectSchema) => {
         errors: errorMessages,
         timestamp: new Date().toISOString(),
       });
+    }
+
+    req.query = value;
+    next();
+  };
+};
+
+// Validation schema for creating installment
+export const createInstallmentSchema = Joi.object({
+  Account_Id: Joi.number().integer().positive().required().messages({
+    "number.integer": "Account_Id must be an integer",
+    "number.positive": "Account_Id must be a positive number",
+    "any.required": "Account_Id is required",
+  }),
+
+  Amount: Joi.number().positive().precision(2).required().messages({
+    "number.positive": "Amount must be a positive number",
+    "any.required": "Amount is required",
+  }),
+
+  Description: Joi.string().trim().max(500).optional().messages({
+    "string.max": "Description must not exceed 500 characters",
+  }),
+
+  isDebit: Joi.boolean().required().messages({
+    "boolean.base": "isDebit must be a boolean value",
+    "any.required": "isDebit is required",
+  }),
+
+  Start_Date: Joi.date().optional().messages({
+    "date.base": "Start_Date must be a valid date",
+  }),
+
+  End_Date: Joi.date().min(Joi.ref("Start_Date")).optional().messages({
+    "date.base": "End_Date must be a valid date",
+    "date.min": "End_Date must be after or equal to Start_Date",
+  }),
+});
+
+// Validation schema for updating installment
+export const updateInstallmentSchema = Joi.object({
+  Account_Id: Joi.number().integer().positive().optional().messages({
+    "number.integer": "Account_Id must be an integer",
+    "number.positive": "Account_Id must be a positive number",
+  }),
+
+  Amount: Joi.number().positive().precision(2).optional().messages({
+    "number.positive": "Amount must be a positive number",
+  }),
+
+  Description: Joi.string().trim().max(500).optional().messages({
+    "string.max": "Description must not exceed 500 characters",
+  }),
+
+  isDebit: Joi.boolean().optional().messages({
+    "boolean.base": "isDebit must be a boolean value",
+  }),
+
+  Start_Date: Joi.date().optional().messages({
+    "date.base": "Start_Date must be a valid date",
+  }),
+
+  End_Date: Joi.date().optional().messages({
+    "date.base": "End_Date must be a valid date",
+  }),
+})
+  .min(1)
+  .messages({
+    "object.min": "At least one field must be provided for update",
+  });
+
+// Validation schema for installment query parameters
+export const installmentQuerySchema = Joi.object({
+  page: Joi.number().integer().positive().optional(),
+  limit: Joi.number().integer().positive().max(100).optional(),
+  sortBy: Joi.string()
+    .valid(
+      "Id",
+      "Amount",
+      "Description",
+      "Start_Date",
+      "End_Date",
+      "Account_Id"
+    )
+    .optional(),
+  sortOrder: Joi.string().valid("asc", "desc").optional(),
+  Account_Id: Joi.number().integer().positive().optional(),
+  Person_Id: Joi.number().integer().positive().optional(),
+  isDebit: Joi.boolean().optional(),
+  amountMin: Joi.number().positive().optional(),
+  amountMax: Joi.number().positive().optional(),
+  startDateFrom: Joi.date().optional(),
+  startDateTo: Joi.date().optional(),
+  endDateFrom: Joi.date().optional(),
+  endDateTo: Joi.date().optional(),
+  search: Joi.string().optional(),
+});
+
+// Middleware factory for installment validation
+export const validateInstallment = (schema: Joi.ObjectSchema) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const { error, value } = schema.validate(req.body);
+
+    if (error) {
+      const errorMessages = error.details.map((detail) => detail.message);
+      res.status(400).json({
+        status: "error",
+        message: "Validation failed",
+        errors: errorMessages,
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+
+    req.body = value;
+    next();
+  };
+};
+
+// Middleware for installment query parameter validation
+export const validateInstallmentQuery = () => {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const { error, value } = installmentQuerySchema.validate(req.query);
+
+    if (error) {
+      const errorMessages = error.details.map((detail) => detail.message);
+      res.status(400).json({
+        status: "error",
+        message: "Invalid query parameters",
+        errors: errorMessages,
+        timestamp: new Date().toISOString(),
+      });
+      return;
     }
 
     req.query = value;

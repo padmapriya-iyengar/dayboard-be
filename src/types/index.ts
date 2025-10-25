@@ -103,6 +103,8 @@ export interface PaginatedResponse<T> extends ApiResponse<T[]> {
     limit: number;
     total: number;
     pages: number;
+    hasNext?: boolean;
+    hasPrev?: boolean;
   };
 }
 
@@ -178,6 +180,54 @@ export interface Reminder {
   addedBy?: string;
   createdAt: Date;
   updatedAt: Date;
+}
+
+// Person Installments interface for the Person_Installments table
+export interface PersonInstallment {
+  Id?: number;
+  Account_Id: number;
+  Amount: number;
+  Description?: string;
+  isDebit: boolean;
+  Start_Date?: Date;
+  End_Date?: Date;
+  AccountName?: string; // For joined queries (from Person_Account)
+  Currency?: string; // For joined queries (from Person_Account)
+  PersonName?: string; // For joined queries (through Person_Account -> Person_Details)
+}
+
+// Interface for creating new installment (without auto-generated fields)
+export interface CreatePersonInstallment {
+  Account_Id: number;
+  Amount: number;
+  Description?: string;
+  isDebit: boolean;
+  Start_Date?: Date;
+  End_Date?: Date;
+}
+
+// Interface for updating installment (all fields optional)
+export interface UpdatePersonInstallment {
+  Account_Id?: number;
+  Amount?: number;
+  Description?: string;
+  isDebit?: boolean;
+  Start_Date?: Date;
+  End_Date?: Date;
+}
+
+// Installment filters interface for querying
+export interface InstallmentFilters {
+  Account_Id?: number;
+  Person_Id?: number;
+  isDebit?: boolean;
+  amountMin?: number;
+  amountMax?: number;
+  startDateFrom?: Date;
+  startDateTo?: Date;
+  endDateFrom?: Date;
+  endDateTo?: Date;
+  search?: string;
 }
 
 // Task interface

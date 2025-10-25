@@ -2,6 +2,7 @@ import express, { Request, Response } from "express";
 import expenseRoutes from "./expenses";
 import personRoutes from "./persons";
 import accountRoutes from "./accounts";
+import installmentRoutes from "./installments";
 
 const router = express.Router();
 
@@ -24,6 +25,7 @@ router.get("/", (_req: Request, res: Response) => {
       expenses: "/api/v1/expenses",
       persons: "/api/v1/persons",
       accounts: "/api/v1/accounts",
+      installments: "/api/v1/installments",
       // auth: '/api/v1/auth',
       // grocery: '/api/v1/grocery',
       // finance: '/api/v1/finance',
@@ -38,5 +40,6 @@ router.get("/", (_req: Request, res: Response) => {
 router.use("/expenses", expenseRoutes);
 router.use("/persons", personRoutes);
 router.use("/accounts", accountRoutes);
+router.use("/installments", installmentRoutes);
 
 export default router;
