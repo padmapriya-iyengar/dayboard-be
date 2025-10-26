@@ -13,13 +13,13 @@ export class PortfolioService {
   private static readonly INR_TO_AED = 1 / 23;
 
   /**
-   * Get portfolio data for all persons with their account summaries
+   * Get portfolio data for all persons with their account balances
    */
   static async getPortfolioData(): Promise<PortfolioResponse> {
     try {
       const pool = getPool();
 
-      // Get all expense data with person, account, and currency information
+      // Get all account data with person information and current balance
       const query = `
         SELECT 
           p.Id as PersonId,
@@ -27,15 +27,11 @@ export class PortfolioService {
           pa.Id as AccountId,
           pa.Account as AccountName,
           pa.Currency,
-          ISNULL(COUNT(e.Id), 0) as ExpenseCount,
-          ISNULL(SUM(e.Amount), 0) as TotalAmount,
-          ISNULL(SUM(CASE WHEN e.isDebit = 1 THEN e.Amount ELSE 0 END), 0) as DebitAmount,
-          ISNULL(SUM(CASE WHEN e.isDebit = 0 THEN e.Amount ELSE 0 END), 0) as CreditAmount
+          pa.Type as AccountType,
+          ISNULL(pa.Balance, 0) as Balance
         FROM Person_Details p
         INNER JOIN Person_Account pa ON p.Id = pa.Person_Id
-        LEFT JOIN Expense_Details e ON pa.Id = e.Account_Id
         WHERE pa.Currency IN ('AED', 'INR')
-        GROUP BY p.Id, p.Name, pa.Id, pa.Account, pa.Currency
         ORDER BY p.Name, pa.Account
       `;
 
@@ -44,7 +40,7 @@ export class PortfolioService {
 
       // Process the data to create portfolio structure
       const portfolios = this.processPortfolioData(rawData);
-      const summary = this.calculatePortfolioSummary(portfolios, rawData);
+      const summary = this.calculatePortfolioSummary(portfolios);
 
       return {
         status: "success",
@@ -81,15 +77,11 @@ export class PortfolioService {
           pa.Id as AccountId,
           pa.Account as AccountName,
           pa.Currency,
-          ISNULL(COUNT(e.Id), 0) as ExpenseCount,
-          ISNULL(SUM(e.Amount), 0) as TotalAmount,
-          ISNULL(SUM(CASE WHEN e.isDebit = 1 THEN e.Amount ELSE 0 END), 0) as DebitAmount,
-          ISNULL(SUM(CASE WHEN e.isDebit = 0 THEN e.Amount ELSE 0 END), 0) as CreditAmount
+          pa.Type as AccountType,
+          ISNULL(pa.Balance, 0) as Balance
         FROM Person_Details p
         INNER JOIN Person_Account pa ON p.Id = pa.Person_Id
-        LEFT JOIN Expense_Details e ON pa.Id = e.Account_Id
         WHERE p.Id = @personId AND pa.Currency IN ('AED', 'INR')
-        GROUP BY p.Id, p.Name, pa.Id, pa.Account, pa.Currency
         ORDER BY pa.Account
       `;
 
@@ -153,36 +145,39 @@ export class PortfolioService {
         return;
       }
 
-      // Process account data
-      const totalAmount = row.TotalAmount || 0;
-      const debitAmount = row.DebitAmount || 0;
-      const creditAmount = row.CreditAmount || 0;
-      const netAmount = creditAmount - debitAmount;
+      // Process account data - using the database Balance column
+      const balance = row.Balance || 0;
       const currency = row.Currency?.toUpperCase();
 
       const accountPortfolio: AccountPortfolio = {
         accountId: row.AccountId,
         accountName: row.AccountName,
         currency: currency,
+        accountType: row.AccountType,
         amounts: {
-          totalAmount,
-          debitAmount,
-          creditAmount,
-          netAmount,
-          expenseCount: row.ExpenseCount || 0,
+          totalAmount: Math.abs(balance), // Total absolute amount
+          debitAmount: balance < 0 ? Math.abs(balance) : 0, // If negative, it's a debit balance
+          creditAmount: balance > 0 ? balance : 0, // If positive, it's a credit balance
+          netAmount: balance, // Net amount is the actual balance
+          expenseCount: 0, // We don't calculate this anymore
         },
         convertedAmounts: this.calculateConvertedAmounts(
-          totalAmount,
-          debitAmount,
-          creditAmount,
-          netAmount,
+          Math.abs(balance),
+          balance < 0 ? Math.abs(balance) : 0,
+          balance > 0 ? balance : 0,
+          balance,
           currency
         ),
       };
 
       person.accounts.push(accountPortfolio);
 
-      // Add to person totals based on original currency
+      // Add to person totals based on original currency (using actual balance)
+      const totalAmount = Math.abs(balance);
+      const debitAmount = balance < 0 ? Math.abs(balance) : 0;
+      const creditAmount = balance > 0 ? balance : 0;
+      const netAmount = balance;
+
       if (currency === "AED") {
         person.totals.aed.totalAmount += totalAmount;
         person.totals.aed.debitAmount += debitAmount;
@@ -267,13 +262,12 @@ export class PortfolioService {
    * Calculate overall portfolio summary
    */
   private static calculatePortfolioSummary(
-    portfolios: PersonPortfolio[],
-    rawData: any[]
+    portfolios: PersonPortfolio[]
   ): PortfolioSummary {
     const summary: PortfolioSummary = {
       totalPersons: portfolios.length,
       totalAccounts: 0,
-      totalExpenses: 0,
+      totalExpenses: 0, // Not calculated anymore since we use database balance
       grandTotals: {
         aed: { totalAmount: 0, debitAmount: 0, creditAmount: 0, netAmount: 0 },
         inr: { totalAmount: 0, debitAmount: 0, creditAmount: 0, netAmount: 0 },
@@ -288,10 +282,7 @@ export class PortfolioService {
     // Calculate totals from portfolios
     portfolios.forEach((portfolio) => {
       summary.totalAccounts += portfolio.accounts.length;
-
-      portfolio.accounts.forEach((account) => {
-        summary.totalExpenses += account.amounts.expenseCount;
-      });
+      // Note: No longer calculating totalExpenses since we use database balance
 
       // Add to grand totals (avoiding double conversion since portfolios already have converted totals)
       summary.grandTotals.aed.totalAmount += portfolio.totals.aed.totalAmount;

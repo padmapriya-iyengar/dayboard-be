@@ -28,13 +28,14 @@ const router = Router();
  *           type: string
  *           description: Name of the account
  *           maxLength: 255
- *         AccountType:
+ *         Currency:
+ *           type: string
+ *           description: Account currency
+ *           maxLength: 10
+ *         Type:
  *           type: string
  *           description: Type of account (e.g., Savings, Checking, Credit Card)
- *           maxLength: 100
- *         IsActive:
- *           type: boolean
- *           description: Whether the account is active
+ *           maxLength: 50
  *         PersonName:
  *           type: string
  *           description: Name of the person (from joined query)
@@ -55,6 +56,10 @@ const router = Router();
  *           type: string
  *           description: Account currency (optional)
  *           maxLength: 10
+ *         Type:
+ *           type: string
+ *           description: Type of account (optional)
+ *           maxLength: 50
  *       required:
  *         - Person_Id
  *         - Account
@@ -72,6 +77,10 @@ const router = Router();
  *           type: string
  *           description: Account currency
  *           maxLength: 10
+ *         Type:
+ *           type: string
+ *           description: Type of account
+ *           maxLength: 50
  */
 
 /**

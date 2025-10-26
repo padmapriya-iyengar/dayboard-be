@@ -42,6 +42,10 @@ export const createAccountSchema = Joi.object({
   Currency: Joi.string().trim().max(10).optional().messages({
     "string.max": "Currency must not exceed 10 characters",
   }),
+
+  Type: Joi.string().trim().max(50).optional().messages({
+    "string.max": "Type must not exceed 50 characters",
+  }),
 });
 
 // Validation schema for updating account
@@ -59,6 +63,10 @@ export const updateAccountSchema = Joi.object({
 
   Currency: Joi.string().trim().max(10).optional().messages({
     "string.max": "Currency must not exceed 10 characters",
+  }),
+
+  Type: Joi.string().trim().max(50).optional().messages({
+    "string.max": "Type must not exceed 50 characters",
   }),
 })
   .min(1)

@@ -140,6 +140,7 @@ export class ExpenseService {
         SELECT e.Id, e.Amount, e.Description, e.isDebit, e.TxnDate, e.Account_Id,
                ISNULL(pa.Account, 'No Account') as AccountName,
                ISNULL(pa.Currency, '') as Currency,
+               ISNULL(pa.Type, '') as AccountType,
                ISNULL(p.Name, 'Unknown Person') as PersonName
         FROM Expense_Details e
         LEFT JOIN Person_Account pa ON e.Account_Id = pa.Id
@@ -189,7 +190,7 @@ export class ExpenseService {
 
       const query = `
         SELECT e.Id, e.Amount, e.Description, e.isDebit, e.TxnDate, e.Account_Id, 
-               pa.Account as AccountName, pa.Currency, p.Name as PersonName
+               pa.Account as AccountName, pa.Currency, pa.Type as AccountType, p.Name as PersonName
         FROM Expense_Details e
         LEFT JOIN Person_Account pa ON e.Account_Id = pa.Id
         LEFT JOIN Person_Details p ON pa.Person_Id = p.Id

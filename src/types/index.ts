@@ -20,6 +20,7 @@ export interface PersonAccount {
   Person_Id: number;
   Account: string; // Actual column name in database
   Currency?: string; // Additional field in database
+  Type?: string; // New field for account type
   PersonName?: string; // For joined queries
 }
 
@@ -28,6 +29,7 @@ export interface CreatePersonAccount {
   Person_Id: number;
   Account: string; // Actual column name in database
   Currency?: string; // Additional field in database
+  Type?: string; // New field for account type
 }
 
 // Interface for updating account (all fields optional)
@@ -35,6 +37,7 @@ export interface UpdatePersonAccount {
   Person_Id?: number;
   Account?: string; // Actual column name in database
   Currency?: string; // Additional field in database
+  Type?: string; // New field for account type
 }
 
 // Expense Details interface for the existing table (matching actual DB schema)
@@ -255,6 +258,7 @@ export interface AccountPortfolio {
   accountId: number;
   accountName: string;
   currency: string;
+  accountType?: string;
   amounts: {
     totalAmount: number;
     debitAmount: number;

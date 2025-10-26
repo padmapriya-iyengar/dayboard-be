@@ -52,6 +52,7 @@ export class PersonAccountService {
             pa.Person_Id, 
             pa.Account as AccountName, 
             pa.Currency, 
+            pa.Type,
             p.Name as PersonName
           FROM Person_Account pa
           INNER JOIN Person_Details p ON pa.Person_Id = p.Id
@@ -87,6 +88,7 @@ export class PersonAccountService {
             pa.Person_Id, 
             pa.Account as AccountName, 
             pa.Currency, 
+            pa.Type,
             p.Name as PersonName
           FROM Person_Account pa
           INNER JOIN Person_Details p ON pa.Person_Id = p.Id
@@ -115,6 +117,7 @@ export class PersonAccountService {
             pa.Person_Id, 
             pa.Account as AccountName, 
             pa.Currency, 
+            pa.Type,
             p.Name as PersonName
           FROM Person_Account pa
           INNER JOIN Person_Details p ON pa.Person_Id = p.Id
@@ -152,10 +155,11 @@ export class PersonAccountService {
         .request()
         .input("personId", sql.Int, accountData.Person_Id)
         .input("account", sql.NVarChar, accountData.Account)
-        .input("currency", sql.NVarChar, accountData.Currency || "USD").query(`
-          INSERT INTO Person_Account (Person_Id, Account, Currency)
-          OUTPUT INSERTED.Id, INSERTED.Person_Id, INSERTED.Account, INSERTED.Currency
-          VALUES (@personId, @account, @currency)
+        .input("currency", sql.NVarChar, accountData.Currency || "USD")
+        .input("type", sql.NVarChar, accountData.Type || null).query(`
+          INSERT INTO Person_Account (Person_Id, Account, Currency, Type)
+          OUTPUT INSERTED.Id, INSERTED.Person_Id, INSERTED.Account, INSERTED.Currency, INSERTED.Type
+          VALUES (@personId, @account, @currency, @type)
         `);
 
       return result.recordset[0];
@@ -219,6 +223,11 @@ export class PersonAccountService {
         request.input("currency", sql.NVarChar, accountData.Currency);
       }
 
+      if (accountData.Type !== undefined) {
+        updateFields.push("Type = @type");
+        request.input("type", sql.NVarChar, accountData.Type);
+      }
+
       if (updateFields.length === 0) {
         throw new Error("No fields to update");
       }
@@ -228,7 +237,7 @@ export class PersonAccountService {
       const result = await request.query(`
         UPDATE Person_Account 
         SET ${updateFields.join(", ")}
-        OUTPUT INSERTED.Id, INSERTED.Person_Id, INSERTED.Account, INSERTED.Currency
+        OUTPUT INSERTED.Id, INSERTED.Person_Id, INSERTED.Account, INSERTED.Currency, INSERTED.Type
         WHERE Id = @id
       `);
 
