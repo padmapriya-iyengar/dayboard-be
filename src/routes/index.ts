@@ -3,6 +3,7 @@ import expenseRoutes from "./expenses";
 import personRoutes from "./persons";
 import accountRoutes from "./accounts";
 import installmentRoutes from "./installments";
+import portfolioRoutes from "./portfolio";
 
 const router = express.Router();
 
@@ -26,6 +27,7 @@ router.get("/", (_req: Request, res: Response) => {
       persons: "/api/v1/persons",
       accounts: "/api/v1/accounts",
       installments: "/api/v1/installments",
+      portfolio: "/api/v1/portfolio",
       // auth: '/api/v1/auth',
       // grocery: '/api/v1/grocery',
       // finance: '/api/v1/finance',
@@ -41,5 +43,6 @@ router.use("/expenses", expenseRoutes);
 router.use("/persons", personRoutes);
 router.use("/accounts", accountRoutes);
 router.use("/installments", installmentRoutes);
+router.use("/portfolio", portfolioRoutes);
 
 export default router;

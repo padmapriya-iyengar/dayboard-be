@@ -230,6 +230,89 @@ export interface InstallmentFilters {
   search?: string;
 }
 
+// Portfolio interfaces for aggregated expense data by person
+export interface PersonPortfolio {
+  personId: number;
+  personName: string;
+  accounts: AccountPortfolio[];
+  totals: {
+    aed: {
+      totalAmount: number;
+      debitAmount: number;
+      creditAmount: number;
+      netAmount: number; // creditAmount - debitAmount
+    };
+    inr: {
+      totalAmount: number;
+      debitAmount: number;
+      creditAmount: number;
+      netAmount: number; // creditAmount - debitAmount
+    };
+  };
+}
+
+export interface AccountPortfolio {
+  accountId: number;
+  accountName: string;
+  currency: string;
+  amounts: {
+    totalAmount: number;
+    debitAmount: number;
+    creditAmount: number;
+    netAmount: number; // creditAmount - debitAmount
+    expenseCount: number;
+  };
+  convertedAmounts?: {
+    aed: {
+      totalAmount: number;
+      debitAmount: number;
+      creditAmount: number;
+      netAmount: number;
+    };
+    inr: {
+      totalAmount: number;
+      debitAmount: number;
+      creditAmount: number;
+      netAmount: number;
+    };
+  };
+}
+
+export interface PortfolioSummary {
+  totalPersons: number;
+  totalAccounts: number;
+  totalExpenses: number;
+  grandTotals: {
+    aed: {
+      totalAmount: number;
+      debitAmount: number;
+      creditAmount: number;
+      netAmount: number;
+    };
+    inr: {
+      totalAmount: number;
+      debitAmount: number;
+      creditAmount: number;
+      netAmount: number;
+    };
+  };
+  conversionRate: {
+    aedToInr: number;
+    inrToAed: number;
+  };
+  generatedAt: string;
+}
+
+export interface PortfolioResponse {
+  status: string;
+  message: string;
+  data: {
+    summary: PortfolioSummary;
+    portfolios: PersonPortfolio[];
+  };
+  timestamp: string;
+}
+
 // Task interface
 export interface Task {
   id: string;
