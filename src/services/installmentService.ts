@@ -158,7 +158,7 @@ export class InstallmentService {
 
       // Get paginated data with account and person details
       const dataQuery = `
-        SELECT i.Id, i.Account_Id, i.Amount, i.Description, i.isDebit, i.Start_Date, i.End_Date,
+        SELECT i.Id, i.Account_Id, i.Amount, i.Description, i.isDebit, i.Start_Date, i.End_Date, i.Type,
                ISNULL(pa.Account, 'No Account') as AccountName,
                ISNULL(pa.Currency, '') as Currency,
                ISNULL(p.Name, 'Unknown Person') as PersonName
@@ -213,7 +213,7 @@ export class InstallmentService {
       request.input("id", sql.Int, id);
 
       const query = `
-        SELECT i.Id, i.Account_Id, i.Amount, i.Description, i.isDebit, i.Start_Date, i.End_Date,
+        SELECT i.Id, i.Account_Id, i.Amount, i.Description, i.isDebit, i.Start_Date, i.End_Date, i.Type,
                pa.Account as AccountName, pa.Currency, p.Name as PersonName
         FROM Person_Installments i
         LEFT JOIN Person_Account pa ON i.Account_Id = pa.Id
@@ -244,7 +244,7 @@ export class InstallmentService {
       const pool = getPool();
       const result = await pool.request().input("accountId", sql.Int, accountId)
         .query(`
-          SELECT i.Id, i.Account_Id, i.Amount, i.Description, i.isDebit, i.Start_Date, i.End_Date,
+          SELECT i.Id, i.Account_Id, i.Amount, i.Description, i.isDebit, i.Start_Date, i.End_Date, i.Type,
                  pa.Account as AccountName, pa.Currency, p.Name as PersonName
           FROM Person_Installments i
           LEFT JOIN Person_Account pa ON i.Account_Id = pa.Id
@@ -287,11 +287,11 @@ export class InstallmentService {
         .input("isDebit", sql.Bit, installmentData.isDebit)
         .input("startDate", sql.DateTime, installmentData.Start_Date || null)
         .input("endDate", sql.DateTime, installmentData.End_Date || null)
-        .query(`
-          INSERT INTO Person_Installments (Account_Id, Amount, Description, isDebit, Start_Date, End_Date)
+        .input("type", sql.NVarChar, installmentData.Type || null).query(`
+          INSERT INTO Person_Installments (Account_Id, Amount, Description, isDebit, Start_Date, End_Date, Type)
           OUTPUT INSERTED.Id, INSERTED.Account_Id, INSERTED.Amount, INSERTED.Description, INSERTED.isDebit, 
-                 INSERTED.Start_Date, INSERTED.End_Date
-          VALUES (@accountId, @amount, @description, @isDebit, @startDate, @endDate)
+                 INSERTED.Start_Date, INSERTED.End_Date, INSERTED.Type
+          VALUES (@accountId, @amount, @description, @isDebit, @startDate, @endDate, @type)
         `);
 
       return result.recordset[0];
@@ -359,6 +359,11 @@ export class InstallmentService {
         request.input("endDate", sql.DateTime, installmentData.End_Date);
       }
 
+      if (installmentData.Type !== undefined) {
+        updateFields.push("Type = @type");
+        request.input("type", sql.NVarChar, installmentData.Type);
+      }
+
       if (updateFields.length === 0) {
         throw new Error("No fields to update");
       }
@@ -369,7 +374,7 @@ export class InstallmentService {
         UPDATE Person_Installments 
         SET ${updateFields.join(", ")}
         OUTPUT INSERTED.Id, INSERTED.Account_Id, INSERTED.Amount, INSERTED.Description, INSERTED.isDebit,
-               INSERTED.Start_Date, INSERTED.End_Date
+               INSERTED.Start_Date, INSERTED.End_Date, INSERTED.Type
         WHERE Id = @id
       `);
 

@@ -40,6 +40,9 @@ const router = express.Router();
  *           type: string
  *           format: date-time
  *           description: End date of the installment
+ *         Type:
+ *           type: string
+ *           description: Type of the installment
  *         AccountName:
  *           type: string
  *           description: Name of the account (from joined query)
@@ -77,6 +80,9 @@ const router = express.Router();
  *           type: string
  *           format: date-time
  *           description: End date of the installment (optional)
+ *         Type:
+ *           type: string
+ *           description: Type of the installment (optional)
  *       required:
  *         - Account_Id
  *         - Amount
@@ -105,6 +111,9 @@ const router = express.Router();
  *           type: string
  *           format: date-time
  *           description: End date of the installment
+ *         Type:
+ *           type: string
+ *           description: Type of the installment
  */
 
 /**

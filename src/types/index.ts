@@ -194,6 +194,7 @@ export interface PersonInstallment {
   isDebit: boolean;
   Start_Date?: Date;
   End_Date?: Date;
+  Type?: string; // New field for installment type
   AccountName?: string; // For joined queries (from Person_Account)
   Currency?: string; // For joined queries (from Person_Account)
   PersonName?: string; // For joined queries (through Person_Account -> Person_Details)
@@ -207,6 +208,7 @@ export interface CreatePersonInstallment {
   isDebit: boolean;
   Start_Date?: Date;
   End_Date?: Date;
+  Type?: string; // New field for installment type
 }
 
 // Interface for updating installment (all fields optional)
@@ -217,6 +219,7 @@ export interface UpdatePersonInstallment {
   isDebit?: boolean;
   Start_Date?: Date;
   End_Date?: Date;
+  Type?: string; // New field for installment type
 }
 
 // Installment filters interface for querying

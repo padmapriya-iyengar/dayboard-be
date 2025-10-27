@@ -301,6 +301,10 @@ export const createInstallmentSchema = Joi.object({
     "date.base": "End_Date must be a valid date",
     "date.min": "End_Date must be after or equal to Start_Date",
   }),
+
+  Type: Joi.string().trim().max(100).optional().messages({
+    "string.max": "Type must not exceed 100 characters",
+  }),
 });
 
 // Validation schema for updating installment
@@ -328,6 +332,10 @@ export const updateInstallmentSchema = Joi.object({
 
   End_Date: Joi.date().optional().messages({
     "date.base": "End_Date must be a valid date",
+  }),
+
+  Type: Joi.string().trim().max(100).optional().messages({
+    "string.max": "Type must not exceed 100 characters",
   }),
 })
   .min(1)
