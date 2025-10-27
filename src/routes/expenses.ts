@@ -54,6 +54,18 @@ router.get(
 router.get("/summary", ExpenseController.getExpenseSummary);
 
 /**
+ * @route   GET /api/expenses/wallet-inquiries
+ * @desc    Get all wallet inquiries (expenses from WALLET type accounts) with filtering and pagination
+ * @access  Public
+ * @query   ?isDebit=boolean&dateFrom=date&dateTo=date&amountMin=number&amountMax=number&search=string&Account_Id=number&page=number&limit=number&sortBy=string&sortOrder=asc|desc
+ */
+router.get(
+  "/wallet-inquiries",
+  validateExpenseFilters,
+  ExpenseController.getAllWalletInquiries
+);
+
+/**
  * @route   GET /api/expenses/:id
  * @desc    Get expense by ID
  * @access  Public

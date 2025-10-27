@@ -54,6 +54,55 @@ export class ExpenseController {
   );
 
   /**
+   * Get all wallet inquiries (expenses from WALLET type accounts) with filtering and pagination
+   */
+  static readonly getAllWalletInquiries = catchAsync(
+    async (req: Request, res: Response) => {
+      let isDebit: boolean | undefined;
+      if (req.query.isDebit === "true") {
+        isDebit = true;
+      } else if (req.query.isDebit === "false") {
+        isDebit = false;
+      }
+
+      const filters: ExpenseFilters = {
+        isDebit,
+        amountMin: req.query.amountMin
+          ? parseFloat(req.query.amountMin as string)
+          : undefined,
+        amountMax: req.query.amountMax
+          ? parseFloat(req.query.amountMax as string)
+          : undefined,
+        search: req.query.search as string,
+        dateFrom: req.query.dateFrom
+          ? new Date(req.query.dateFrom as string)
+          : undefined,
+        dateTo: req.query.dateTo
+          ? new Date(req.query.dateTo as string)
+          : undefined,
+        Account_Id: req.query.Account_Id
+          ? parseInt(req.query.Account_Id as string)
+          : undefined,
+      };
+
+      const pagination: PaginationOptions = {
+        page: parseInt(req.query.page as string) || 1,
+        limit: parseInt(req.query.limit as string) || 50,
+        sortBy: (req.query.sortBy as string) || "TxnDate",
+        sortOrder:
+          ((req.query.sortOrder as string)?.toLowerCase() as "asc" | "desc") ||
+          "desc",
+      };
+
+      const result = await ExpenseService.getAllWalletInquiries(
+        filters,
+        pagination
+      );
+      res.status(200).json(result);
+    }
+  );
+
+  /**
    * Get expense by ID
    */
   static readonly getExpenseById = catchAsync(

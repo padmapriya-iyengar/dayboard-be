@@ -72,8 +72,13 @@ export class ExpenseService {
           ? `WHERE ${whereConditions.join(" AND ")}`
           : "";
 
-      // Get total count first - simple query without joins for now
-      const countQuery = `SELECT COUNT(*) as total FROM Expense_Details e ${whereClause}`;
+      // Get total count first - include Transaction type filter
+      const countQuery = `
+        SELECT COUNT(*) as total 
+        FROM Expense_Details e 
+        LEFT JOIN Person_Account pa ON e.Account_Id = pa.Id
+        ${whereClause}${whereClause ? " AND" : "WHERE"} pa.Type = 'Transaction'
+      `;
       const countResult = await request.query(countQuery);
       const total = countResult.recordset[0].total;
 
@@ -136,6 +141,7 @@ export class ExpenseService {
           : `ORDER BY e.TxnDate DESC, ${sortBy} ${sortOrder}`;
 
       // Get paginated data - using correct column names from actual database
+      // Filter to only include expenses from accounts with Type = 'Transaction'
       const dataQuery = `
         SELECT e.Id, e.Amount, e.Description, e.isDebit, e.TxnDate, e.Account_Id,
                ISNULL(pa.Account, 'No Account') as AccountName,
@@ -145,7 +151,7 @@ export class ExpenseService {
         FROM Expense_Details e
         LEFT JOIN Person_Account pa ON e.Account_Id = pa.Id
         LEFT JOIN Person_Details p ON pa.Person_Id = p.Id
-        ${whereClause}
+        ${whereClause}${whereClause ? " AND" : "WHERE"} pa.Type = 'Transaction'
         ${orderByClause}
         OFFSET @offset ROWS 
         FETCH NEXT @limit ROWS ONLY
@@ -194,7 +200,7 @@ export class ExpenseService {
         FROM Expense_Details e
         LEFT JOIN Person_Account pa ON e.Account_Id = pa.Id
         LEFT JOIN Person_Details p ON pa.Person_Id = p.Id
-        WHERE e.Id = @id
+        WHERE e.Id = @id AND pa.Type = 'Transaction'
       `;
 
       const result = await request.query(query);
@@ -393,14 +399,15 @@ export class ExpenseService {
       const query = `
         SELECT 
           COUNT(*) as totalCount,
-          COALESCE(SUM(Amount), 0) as totalAmount,
-          COALESCE(AVG(Amount), 0) as averageAmount,
-          COALESCE(MIN(Amount), 0) as minAmount,
-          COALESCE(MAX(Amount), 0) as maxAmount,
-          SUM(CASE WHEN isDebit = 1 THEN Amount ELSE 0 END) as totalDebits,
-          SUM(CASE WHEN isDebit = 0 OR isDebit IS NULL THEN Amount ELSE 0 END) as totalCredits
-        FROM Expense_Details 
-        ${whereClause}
+          COALESCE(SUM(e.Amount), 0) as totalAmount,
+          COALESCE(AVG(e.Amount), 0) as averageAmount,
+          COALESCE(MIN(e.Amount), 0) as minAmount,
+          COALESCE(MAX(e.Amount), 0) as maxAmount,
+          SUM(CASE WHEN e.isDebit = 1 THEN e.Amount ELSE 0 END) as totalDebits,
+          SUM(CASE WHEN e.isDebit = 0 OR e.isDebit IS NULL THEN e.Amount ELSE 0 END) as totalCredits
+        FROM Expense_Details e
+        LEFT JOIN Person_Account pa ON e.Account_Id = pa.Id
+        ${whereClause}${whereClause ? " AND" : "WHERE"} pa.Type = 'Transaction'
       `;
 
       const result = await request.query(query);
@@ -460,15 +467,16 @@ export class ExpenseService {
       const query = `
         SELECT 
           CASE 
-            WHEN isDebit = 1 THEN 'Debit' 
+            WHEN e.isDebit = 1 THEN 'Debit' 
             ELSE 'Credit' 
           END as type,
           COUNT(*) as count,
-          SUM(Amount) as totalAmount,
-          AVG(Amount) as averageAmount
-        FROM Expense_Details 
-        ${whereClause}
-        GROUP BY isDebit
+          SUM(e.Amount) as totalAmount,
+          AVG(e.Amount) as averageAmount
+        FROM Expense_Details e
+        LEFT JOIN Person_Account pa ON e.Account_Id = pa.Id
+        ${whereClause}${whereClause ? " AND" : "WHERE"} pa.Type = 'Transaction'
+        GROUP BY e.isDebit
         ORDER BY type
       `;
 
@@ -479,6 +487,165 @@ export class ExpenseService {
       console.error("Error in getExpensesByType:", error);
       throw new Error(
         `Failed to get expenses by type: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    }
+  }
+
+  /**
+   * Get all wallet inquiries (expenses from WALLET type accounts) with optional filtering and pagination
+   */
+  static async getAllWalletInquiries(
+    filters: ExpenseFilters = {},
+    pagination: PaginationOptions = { page: 1, limit: 50 }
+  ): Promise<PaginatedResponse<ExpenseDetails>> {
+    try {
+      const pool = getPool();
+      let request = pool.request();
+
+      // Build WHERE clause dynamically
+      const whereConditions: string[] = [];
+
+      if (filters.isDebit !== undefined) {
+        whereConditions.push("e.isDebit = @isDebit");
+        request.input("isDebit", sql.Bit, filters.isDebit);
+      }
+
+      if (filters.amountMin !== undefined) {
+        whereConditions.push("e.Amount >= @amountMin");
+        request.input("amountMin", sql.Float, filters.amountMin);
+      }
+
+      if (filters.amountMax !== undefined) {
+        whereConditions.push("e.Amount <= @amountMax");
+        request.input("amountMax", sql.Float, filters.amountMax);
+      }
+
+      if (filters.search) {
+        whereConditions.push("e.Description LIKE @search");
+        request.input("search", sql.NVarChar, `%${filters.search}%`);
+      }
+
+      if (filters.dateFrom) {
+        whereConditions.push("e.TxnDate >= @dateFrom");
+        request.input("dateFrom", sql.Date, filters.dateFrom);
+      }
+
+      if (filters.dateTo) {
+        whereConditions.push("e.TxnDate <= @dateTo");
+        request.input("dateTo", sql.Date, filters.dateTo);
+      }
+
+      if (filters.Account_Id !== undefined) {
+        whereConditions.push("e.Account_Id = @accountId");
+        request.input("accountId", sql.Int, filters.Account_Id);
+      }
+
+      const whereClause =
+        whereConditions.length > 0
+          ? `WHERE ${whereConditions.join(" AND ")}`
+          : "";
+
+      // Get total count first - include WALLET type filter
+      const countQuery = `
+        SELECT COUNT(*) as total 
+        FROM Expense_Details e 
+        LEFT JOIN Person_Account pa ON e.Account_Id = pa.Id
+        ${whereClause}${whereClause ? " AND" : "WHERE"} pa.Type = 'WALLET'
+      `;
+      const countResult = await request.query(countQuery);
+      const total = countResult.recordset[0].total;
+
+      // Create new request for data query
+      request = pool.request();
+
+      // Re-add parameters for data query
+      if (filters.isDebit !== undefined) {
+        request.input("isDebit", sql.Bit, filters.isDebit);
+      }
+      if (filters.amountMin !== undefined) {
+        request.input("amountMin", sql.Float, filters.amountMin);
+      }
+      if (filters.amountMax !== undefined) {
+        request.input("amountMax", sql.Float, filters.amountMax);
+      }
+      if (filters.search) {
+        request.input("search", sql.NVarChar, `%${filters.search}%`);
+      }
+      if (filters.dateFrom) {
+        request.input("dateFrom", sql.Date, filters.dateFrom);
+      }
+      if (filters.dateTo) {
+        request.input("dateTo", sql.Date, filters.dateTo);
+      }
+      if (filters.Account_Id !== undefined) {
+        request.input("accountId", sql.Int, filters.Account_Id);
+      }
+
+      // Calculate offset for pagination
+      const offset = (pagination.page - 1) * pagination.limit;
+
+      // Build ORDER BY clause - Always order by date DESC first
+      const validSortColumns = [
+        "Id",
+        "Amount",
+        "Description",
+        "TxnDate",
+        "Account_Id",
+      ];
+
+      const sortBy = validSortColumns.includes(pagination.sortBy || "")
+        ? `e.${pagination.sortBy}`
+        : "e.TxnDate";
+
+      let sortOrder = "DESC";
+      if (pagination.sortOrder === "asc") {
+        sortOrder = "ASC";
+      }
+
+      const orderByClause =
+        pagination.sortBy === "TxnDate"
+          ? `ORDER BY ${sortBy} ${sortOrder}, e.Id DESC`
+          : `ORDER BY e.TxnDate DESC, ${sortBy} ${sortOrder}`;
+
+      // Get paginated data - filter to only include expenses from accounts with Type = 'WALLET'
+      const dataQuery = `
+        SELECT e.Id, e.Amount, e.Description, e.isDebit, e.TxnDate, e.Account_Id,
+               ISNULL(pa.Account, 'No Account') as AccountName,
+               ISNULL(pa.Currency, '') as Currency,
+               ISNULL(pa.Type, '') as AccountType,
+               ISNULL(p.Name, 'Unknown Person') as PersonName
+        FROM Expense_Details e
+        LEFT JOIN Person_Account pa ON e.Account_Id = pa.Id
+        LEFT JOIN Person_Details p ON pa.Person_Id = p.Id
+        ${whereClause}${whereClause ? " AND" : "WHERE"} pa.Type = 'WALLET'
+        ${orderByClause}
+        OFFSET @offset ROWS 
+        FETCH NEXT @limit ROWS ONLY
+      `;
+
+      request.input("offset", sql.Int, offset);
+      request.input("limit", sql.Int, pagination.limit);
+
+      const dataResult = await request.query(dataQuery);
+
+      return {
+        status: "success",
+        message: "Wallet inquiries retrieved successfully",
+        data: dataResult.recordset,
+        timestamp: new Date().toISOString(),
+        pagination: {
+          page: pagination.page,
+          limit: pagination.limit,
+          total,
+          pages: Math.ceil(total / pagination.limit),
+        },
+      };
+    } catch (error) {
+      console.error("Error in getAllWalletInquiries:", error);
+      throw new Error(
+        `Failed to retrieve wallet inquiries: ${
           error instanceof Error ? error.message : "Unknown error"
         }`
       );
