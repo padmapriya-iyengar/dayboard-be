@@ -41,7 +41,7 @@ export class ExpenseController {
 
       const pagination: PaginationOptions = {
         page: parseInt(req.query.page as string) || 1,
-        limit: parseInt(req.query.limit as string) || 50,
+        limit: req.query.limit ? parseInt(req.query.limit as string) : 0,
         sortBy: (req.query.sortBy as string) || "TxnDate",
         sortOrder:
           ((req.query.sortOrder as string)?.toLowerCase() as "asc" | "desc") ||
@@ -87,7 +87,7 @@ export class ExpenseController {
 
       const pagination: PaginationOptions = {
         page: parseInt(req.query.page as string) || 1,
-        limit: parseInt(req.query.limit as string) || 50,
+        limit: req.query.limit ? parseInt(req.query.limit as string) : 0,
         sortBy: (req.query.sortBy as string) || "TxnDate",
         sortOrder:
           ((req.query.sortOrder as string)?.toLowerCase() as "asc" | "desc") ||

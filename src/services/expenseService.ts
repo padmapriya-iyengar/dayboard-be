@@ -15,7 +15,7 @@ export class ExpenseService {
    */
   static async getAllExpenses(
     filters: ExpenseFilters = {},
-    pagination: PaginationOptions = { page: 1, limit: 50 }
+    pagination: PaginationOptions = { page: 1, limit: 0 }
   ): Promise<PaginatedResponse<ExpenseDetails>> {
     try {
       const pool = getPool();
@@ -111,7 +111,7 @@ export class ExpenseService {
         request.input("personId", sql.Int, filters.Person_Id);
       }
 
-      // Calculate offset for pagination
+      // Calculate offset for pagination (if limit is provided)
       const offset = (pagination.page - 1) * pagination.limit;
 
       // Build ORDER BY clause - Always order by date DESC first, then by other criteria
@@ -140,6 +140,14 @@ export class ExpenseService {
           ? `ORDER BY ${sortBy} ${sortOrder}, e.Id DESC`
           : `ORDER BY e.TxnDate DESC, ${sortBy} ${sortOrder}`;
 
+      // Build pagination clause - only add OFFSET/FETCH if limit is specified and > 0
+      let paginationClause = "";
+      if (pagination.limit && pagination.limit > 0) {
+        paginationClause = `
+        OFFSET @offset ROWS 
+        FETCH NEXT @limit ROWS ONLY`;
+      }
+
       // Get paginated data - using correct column names from actual database
       // Filter to only include expenses from accounts with Type = 'Transaction'
       const dataQuery = `
@@ -152,13 +160,14 @@ export class ExpenseService {
         LEFT JOIN Person_Account pa ON e.Account_Id = pa.Id
         LEFT JOIN Person_Details p ON pa.Person_Id = p.Id
         ${whereClause}${whereClause ? " AND" : "WHERE"} pa.Type = 'Transaction'
-        ${orderByClause}
-        OFFSET @offset ROWS 
-        FETCH NEXT @limit ROWS ONLY
+        ${orderByClause}${paginationClause}
       `;
 
-      request.input("offset", sql.Int, offset);
-      request.input("limit", sql.Int, pagination.limit);
+      // Only add pagination parameters if limit is specified
+      if (pagination.limit && pagination.limit > 0) {
+        request.input("offset", sql.Int, offset);
+        request.input("limit", sql.Int, pagination.limit);
+      }
 
       const dataResult = await request.query(dataQuery);
 
@@ -171,7 +180,7 @@ export class ExpenseService {
           page: pagination.page,
           limit: pagination.limit,
           total,
-          pages: Math.ceil(total / pagination.limit),
+          pages: pagination.limit > 0 ? Math.ceil(total / pagination.limit) : 1,
         },
       };
     } catch (error) {
@@ -498,7 +507,7 @@ export class ExpenseService {
    */
   static async getAllWalletInquiries(
     filters: ExpenseFilters = {},
-    pagination: PaginationOptions = { page: 1, limit: 50 }
+    pagination: PaginationOptions = { page: 1, limit: 0 }
   ): Promise<PaginatedResponse<ExpenseDetails>> {
     try {
       const pool = getPool();
@@ -583,7 +592,7 @@ export class ExpenseService {
         request.input("accountId", sql.Int, filters.Account_Id);
       }
 
-      // Calculate offset for pagination
+      // Calculate offset for pagination (if limit is provided)
       const offset = (pagination.page - 1) * pagination.limit;
 
       // Build ORDER BY clause - Always order by date DESC first
@@ -609,7 +618,15 @@ export class ExpenseService {
           ? `ORDER BY ${sortBy} ${sortOrder}, e.Id DESC`
           : `ORDER BY e.TxnDate DESC, ${sortBy} ${sortOrder}`;
 
-      // Get paginated data - filter to only include expenses from accounts with Type = 'WALLET'
+      // Build pagination clause - only add OFFSET/FETCH if limit is specified and > 0
+      let paginationClause = "";
+      if (pagination.limit && pagination.limit > 0) {
+        paginationClause = `
+        OFFSET @offset ROWS 
+        FETCH NEXT @limit ROWS ONLY`;
+      }
+
+      // Get data - filter to only include expenses from accounts with Type = 'WALLET'
       const dataQuery = `
         SELECT e.Id, e.Amount, e.Description, e.isDebit, e.TxnDate, e.Account_Id,
                ISNULL(pa.Account, 'No Account') as AccountName,
@@ -620,13 +637,14 @@ export class ExpenseService {
         LEFT JOIN Person_Account pa ON e.Account_Id = pa.Id
         LEFT JOIN Person_Details p ON pa.Person_Id = p.Id
         ${whereClause}${whereClause ? " AND" : "WHERE"} pa.Type = 'WALLET'
-        ${orderByClause}
-        OFFSET @offset ROWS 
-        FETCH NEXT @limit ROWS ONLY
+        ${orderByClause}${paginationClause}
       `;
 
-      request.input("offset", sql.Int, offset);
-      request.input("limit", sql.Int, pagination.limit);
+      // Only add pagination parameters if limit is specified
+      if (pagination.limit && pagination.limit > 0) {
+        request.input("offset", sql.Int, offset);
+        request.input("limit", sql.Int, pagination.limit);
+      }
 
       const dataResult = await request.query(dataQuery);
 
@@ -639,7 +657,7 @@ export class ExpenseService {
           page: pagination.page,
           limit: pagination.limit,
           total,
-          pages: Math.ceil(total / pagination.limit),
+          pages: pagination.limit > 0 ? Math.ceil(total / pagination.limit) : 1,
         },
       };
     } catch (error) {

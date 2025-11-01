@@ -193,7 +193,12 @@ export const expenseFiltersSchema = Joi.object({
 
   page: Joi.number().integer().min(1).default(1).optional(),
 
-  limit: Joi.number().integer().min(1).max(100).default(50).optional(),
+  limit: Joi.number().integer().min(0).max(100).default(0).optional().messages({
+    "number.base": "Limit must be a number",
+    "number.integer": "Limit must be an integer",
+    "number.min": "Limit must be 0 or greater (0 = unlimited)",
+    "number.max": "Limit cannot exceed 100",
+  }),
 
   sortBy: Joi.string()
     .valid("Id", "Amount", "Description", "TxnDate", "Account_Id")
