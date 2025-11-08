@@ -195,6 +195,7 @@ export interface PersonInstallment {
   Start_Date?: Date;
   End_Date?: Date;
   Type?: string; // New field for installment type
+  Active?: boolean; // New field to track if installment is active
   AccountName?: string; // For joined queries (from Person_Account)
   Currency?: string; // For joined queries (from Person_Account)
   PersonName?: string; // For joined queries (through Person_Account -> Person_Details)
@@ -209,6 +210,7 @@ export interface CreatePersonInstallment {
   Start_Date?: Date;
   End_Date?: Date;
   Type?: string; // New field for installment type
+  Active?: boolean; // New field to track if installment is active
 }
 
 // Interface for updating installment (all fields optional)
@@ -220,6 +222,7 @@ export interface UpdatePersonInstallment {
   Start_Date?: Date;
   End_Date?: Date;
   Type?: string; // New field for installment type
+  Active?: boolean; // New field to track if installment is active
 }
 
 // Installment filters interface for querying

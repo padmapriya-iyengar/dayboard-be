@@ -310,6 +310,10 @@ export const createInstallmentSchema = Joi.object({
   Type: Joi.string().trim().max(100).optional().messages({
     "string.max": "Type must not exceed 100 characters",
   }),
+
+  Active: Joi.boolean().optional().messages({
+    "boolean.base": "Active must be a boolean value",
+  }),
 });
 
 // Validation schema for updating installment
@@ -341,6 +345,10 @@ export const updateInstallmentSchema = Joi.object({
 
   Type: Joi.string().trim().max(100).optional().messages({
     "string.max": "Type must not exceed 100 characters",
+  }),
+
+  Active: Joi.boolean().optional().messages({
+    "boolean.base": "Active must be a boolean value",
   }),
 })
   .min(1)

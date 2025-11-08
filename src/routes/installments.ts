@@ -43,6 +43,9 @@ const router = express.Router();
  *         Type:
  *           type: string
  *           description: Type of the installment
+ *         Active:
+ *           type: boolean
+ *           description: Whether the installment is active
  *         AccountName:
  *           type: string
  *           description: Name of the account (from joined query)
@@ -83,6 +86,9 @@ const router = express.Router();
  *         Type:
  *           type: string
  *           description: Type of the installment (optional)
+ *         Active:
+ *           type: boolean
+ *           description: Whether the installment is active (optional, defaults to true)
  *       required:
  *         - Account_Id
  *         - Amount
@@ -114,6 +120,9 @@ const router = express.Router();
  *         Type:
  *           type: string
  *           description: Type of the installment
+ *         Active:
+ *           type: boolean
+ *           description: Whether the installment is active
  */
 
 /**
