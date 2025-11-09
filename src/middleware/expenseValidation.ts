@@ -416,6 +416,100 @@ export const validateInstallment = (schema: Joi.ObjectSchema) => {
   };
 };
 
+// Validation schema for creating expense category
+export const createExpenseCategorySchema = Joi.object({
+  Category: Joi.string().trim().min(1).max(255).required().messages({
+    "string.empty": "Category cannot be empty",
+    "string.min": "Category must have at least 1 character",
+    "string.max": "Category must not exceed 255 characters",
+    "any.required": "Category is required",
+  }),
+  Description: Joi.string().trim().max(500).optional().allow("").messages({
+    "string.max": "Description must not exceed 500 characters",
+  }),
+});
+
+// Validation schema for updating expense category
+export const updateExpenseCategorySchema = Joi.object({
+  Category: Joi.string().trim().min(1).max(255).optional().messages({
+    "string.empty": "Category cannot be empty",
+    "string.min": "Category must have at least 1 character",
+    "string.max": "Category must not exceed 255 characters",
+  }),
+  Description: Joi.string().trim().max(500).optional().allow("").messages({
+    "string.max": "Description must not exceed 500 characters",
+  }),
+})
+  .min(1)
+  .messages({
+    "object.min": "At least one field must be provided for update",
+  });
+
+// Validation schema for creating expense tag
+export const createExpenseTagSchema = Joi.object({
+  Expense_Id: Joi.number().integer().positive().required().messages({
+    "number.integer": "Expense_Id must be an integer",
+    "number.positive": "Expense_Id must be positive",
+    "any.required": "Expense_Id is required",
+  }),
+  Category_Id: Joi.number().integer().positive().required().messages({
+    "number.integer": "Category_Id must be an integer",
+    "number.positive": "Category_Id must be positive",
+    "any.required": "Category_Id is required",
+  }),
+  Category_Value: Joi.string().trim().max(255).optional().allow("").messages({
+    "string.max": "Category_Value must not exceed 255 characters",
+  }),
+});
+
+// Validation schema for updating expense tag
+export const updateExpenseTagSchema = Joi.object({
+  Category_Id: Joi.number().integer().positive().optional().messages({
+    "number.integer": "Category_Id must be an integer",
+    "number.positive": "Category_Id must be positive",
+  }),
+  Category_Value: Joi.string().trim().max(255).optional().allow("").messages({
+    "string.max": "Category_Value must not exceed 255 characters",
+  }),
+})
+  .min(1)
+  .messages({
+    "object.min": "At least one field must be provided for update",
+  });
+
+// Validation schema for bulk creating expense tags
+export const bulkCreateExpenseTagsSchema = Joi.object({
+  expenseId: Joi.number().integer().positive().required().messages({
+    "number.integer": "expenseId must be an integer",
+    "number.positive": "expenseId must be positive",
+    "any.required": "expenseId is required",
+  }),
+  tagData: Joi.array()
+    .items(
+      Joi.object({
+        Category_Id: Joi.number().integer().positive().required().messages({
+          "number.integer": "Category_Id must be an integer",
+          "number.positive": "Category_Id must be positive",
+          "any.required": "Category_Id is required",
+        }),
+        Category_Value: Joi.string()
+          .trim()
+          .max(255)
+          .optional()
+          .allow("")
+          .messages({
+            "string.max": "Category_Value must not exceed 255 characters",
+          }),
+      })
+    )
+    .min(1)
+    .required()
+    .messages({
+      "array.min": "At least one tag must be provided",
+      "any.required": "tagData is required",
+    }),
+});
+
 // Middleware for installment query parameter validation
 export const validateInstallmentQuery = () => {
   return (req: Request, res: Response, next: NextFunction): void => {

@@ -341,3 +341,77 @@ export interface Task {
   createdAt: Date;
   updatedAt: Date;
 }
+
+// Expense Category interfaces for the Expense_Category table
+export interface ExpenseCategory {
+  Id?: number;
+  Category: string;
+  Description?: string;
+}
+
+// Interface for creating new expense category
+export interface CreateExpenseCategory {
+  Category: string;
+  Description?: string;
+}
+
+// Interface for updating expense category
+export interface UpdateExpenseCategory {
+  Category?: string;
+  Description?: string;
+}
+
+// Expense Tag interfaces for the Expense_Tags table
+export interface ExpenseTag {
+  Id?: number;
+  Expense_Id: number;
+  Category_Id: number;
+  Category_Value?: string;
+  // For joined queries
+  CategoryName?: string;
+  CategoryDescription?: string;
+  ExpenseAmount?: number;
+  ExpenseDescription?: string;
+  TxnDate?: Date;
+  AccountName?: string;
+}
+
+// Interface for creating new expense tag
+export interface CreateExpenseTag {
+  Expense_Id: number;
+  Category_Id: number;
+  Category_Value?: string;
+}
+
+// Interface for updating expense tag
+export interface UpdateExpenseTag {
+  Category_Id?: number;
+  Category_Value?: string;
+}
+
+// Enhanced expense interface with tags
+export interface ExpenseWithTags extends ExpenseDetails {
+  tags?: ExpenseTag[];
+  categories?: string[];
+}
+
+// Filter interfaces for categories
+export interface CategoryFilters {
+  search?: string;
+  Category?: string;
+}
+
+// Filter interfaces for tags
+export interface TagFilters {
+  search?: string;
+  Expense_Id?: number;
+  Category_Id?: number;
+  Category_Value?: string;
+  categoryName?: string;
+}
+
+// Interface for bulk creating expense tags
+export interface BulkCreateExpenseTags {
+  expenseId: number;
+  tagData: Array<{ Category_Id: number; Category_Value?: string }>;
+}
