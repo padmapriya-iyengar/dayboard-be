@@ -21,6 +21,8 @@ export interface PersonAccount {
   Account: string; // Actual column name in database
   Currency?: string; // Additional field in database
   Type?: string; // New field for account type
+  Balance?: number; // New field for account balance
+  Last_Updated_On?: Date; // New field for last update timestamp
   PersonName?: string; // For joined queries
 }
 
@@ -30,6 +32,7 @@ export interface CreatePersonAccount {
   Account: string; // Actual column name in database
   Currency?: string; // Additional field in database
   Type?: string; // New field for account type
+  Balance?: number; // New field for account balance (optional, can default to 0)
 }
 
 // Interface for updating account (all fields optional)
@@ -38,6 +41,8 @@ export interface UpdatePersonAccount {
   Account?: string; // Actual column name in database
   Currency?: string; // Additional field in database
   Type?: string; // New field for account type
+  Balance?: number; // New field for account balance
+  Last_Updated_On?: Date; // New field for last update timestamp
 }
 
 // Expense Details interface for the existing table (matching actual DB schema)

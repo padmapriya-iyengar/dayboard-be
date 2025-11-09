@@ -36,6 +36,14 @@ const router = Router();
  *           type: string
  *           description: Type of account (e.g., Savings, Checking, Credit Card)
  *           maxLength: 50
+ *         Balance:
+ *           type: number
+ *           format: decimal
+ *           description: Current account balance
+ *         Last_Updated_On:
+ *           type: string
+ *           format: date-time
+ *           description: Last update timestamp
  *         PersonName:
  *           type: string
  *           description: Name of the person (from joined query)
@@ -60,6 +68,10 @@ const router = Router();
  *           type: string
  *           description: Type of account (optional)
  *           maxLength: 50
+ *         Balance:
+ *           type: number
+ *           format: decimal
+ *           description: Initial account balance (optional, defaults to 0)
  *       required:
  *         - Person_Id
  *         - Account
@@ -81,6 +93,14 @@ const router = Router();
  *           type: string
  *           description: Type of account
  *           maxLength: 50
+ *         Balance:
+ *           type: number
+ *           format: decimal
+ *           description: Account balance
+ *         Last_Updated_On:
+ *           type: string
+ *           format: date-time
+ *           description: Last update timestamp
  */
 
 /**

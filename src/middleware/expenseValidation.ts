@@ -46,6 +46,10 @@ export const createAccountSchema = Joi.object({
   Type: Joi.string().trim().max(50).optional().messages({
     "string.max": "Type must not exceed 50 characters",
   }),
+
+  Balance: Joi.number().precision(2).optional().messages({
+    "number.base": "Balance must be a number",
+  }),
 });
 
 // Validation schema for updating account
@@ -67,6 +71,14 @@ export const updateAccountSchema = Joi.object({
 
   Type: Joi.string().trim().max(50).optional().messages({
     "string.max": "Type must not exceed 50 characters",
+  }),
+
+  Balance: Joi.number().precision(2).optional().messages({
+    "number.base": "Balance must be a number",
+  }),
+
+  Last_Updated_On: Joi.date().optional().messages({
+    "date.base": "Last_Updated_On must be a valid date",
   }),
 })
   .min(1)

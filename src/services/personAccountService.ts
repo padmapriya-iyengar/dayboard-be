@@ -53,6 +53,8 @@ export class PersonAccountService {
             pa.Account as AccountName, 
             pa.Currency, 
             pa.Type,
+            pa.Balance,
+            pa.Last_Updated_On,
             p.Name as PersonName
           FROM Person_Account pa
           INNER JOIN Person_Details p ON pa.Person_Id = p.Id
@@ -89,6 +91,8 @@ export class PersonAccountService {
             pa.Account as AccountName, 
             pa.Currency, 
             pa.Type,
+            pa.Balance,
+            pa.Last_Updated_On,
             p.Name as PersonName
           FROM Person_Account pa
           INNER JOIN Person_Details p ON pa.Person_Id = p.Id
@@ -118,6 +122,8 @@ export class PersonAccountService {
             pa.Account as AccountName, 
             pa.Currency, 
             pa.Type,
+            pa.Balance,
+            pa.Last_Updated_On,
             p.Name as PersonName
           FROM Person_Account pa
           INNER JOIN Person_Details p ON pa.Person_Id = p.Id
@@ -156,10 +162,11 @@ export class PersonAccountService {
         .input("personId", sql.Int, accountData.Person_Id)
         .input("account", sql.NVarChar, accountData.Account)
         .input("currency", sql.NVarChar, accountData.Currency || "USD")
-        .input("type", sql.NVarChar, accountData.Type || null).query(`
-          INSERT INTO Person_Account (Person_Id, Account, Currency, Type)
-          OUTPUT INSERTED.Id, INSERTED.Person_Id, INSERTED.Account, INSERTED.Currency, INSERTED.Type
-          VALUES (@personId, @account, @currency, @type)
+        .input("type", sql.NVarChar, accountData.Type || null)
+        .input("balance", sql.Decimal, accountData.Balance ?? 0).query(`
+          INSERT INTO Person_Account (Person_Id, Account, Currency, Type, Balance, Last_Updated_On)
+          OUTPUT INSERTED.Id, INSERTED.Person_Id, INSERTED.Account, INSERTED.Currency, INSERTED.Type, INSERTED.Balance, INSERTED.Last_Updated_On
+          VALUES (@personId, @account, @currency, @type, @balance, GETDATE())
         `);
 
       return result.recordset[0];
@@ -228,6 +235,25 @@ export class PersonAccountService {
         request.input("type", sql.NVarChar, accountData.Type);
       }
 
+      if (accountData.Balance !== undefined) {
+        updateFields.push("Balance = @balance");
+        request.input("balance", sql.Decimal, accountData.Balance);
+      }
+
+      if (accountData.Last_Updated_On !== undefined) {
+        updateFields.push("Last_Updated_On = @lastUpdatedOn");
+        request.input(
+          "lastUpdatedOn",
+          sql.DateTime,
+          accountData.Last_Updated_On
+        );
+      }
+
+      // Always update Last_Updated_On when any field is updated
+      if (updateFields.length > 0 && !accountData.Last_Updated_On) {
+        updateFields.push("Last_Updated_On = GETDATE()");
+      }
+
       if (updateFields.length === 0) {
         throw new Error("No fields to update");
       }
@@ -237,7 +263,7 @@ export class PersonAccountService {
       const result = await request.query(`
         UPDATE Person_Account 
         SET ${updateFields.join(", ")}
-        OUTPUT INSERTED.Id, INSERTED.Person_Id, INSERTED.Account, INSERTED.Currency, INSERTED.Type
+        OUTPUT INSERTED.Id, INSERTED.Person_Id, INSERTED.Account, INSERTED.Currency, INSERTED.Type, INSERTED.Balance, INSERTED.Last_Updated_On
         WHERE Id = @id
       `);
 
@@ -311,12 +337,15 @@ export class PersonAccountService {
             pa.Person_Id, 
             pa.Account as AccountName, 
             pa.Currency, 
+            pa.Type,
+            pa.Balance,
+            pa.Last_Updated_On,
             p.Name as PersonName,
             COUNT(e.Id) as expenseCount
           FROM Person_Account pa
           INNER JOIN Person_Details p ON pa.Person_Id = p.Id
           LEFT JOIN Expense_Details e ON pa.Id = e.Account_Id
-          GROUP BY pa.Id, pa.Person_Id, pa.Account, pa.Currency, p.Name
+          GROUP BY pa.Id, pa.Person_Id, pa.Account, pa.Currency, pa.Type, pa.Balance, pa.Last_Updated_On, p.Name
           ORDER BY p.Name, pa.Account
         `);
 
